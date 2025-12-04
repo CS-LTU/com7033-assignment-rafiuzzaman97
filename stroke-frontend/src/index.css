@@ -1,0 +1,44 @@
+/* Tailwind CSS v4 import */
+@import "tailwindcss";
+
+body {
+  background: var(--color-secondary);
+  color: var(--color-gray-800);
+  font-family: var(--font-sans);
+}
+
+/* Dark mode overrides when `.dark` is present on html */
+html.dark body {
+  background: #111827; /* gray-900 */
+  color: #e5e7eb; /* gray-200 */
+}
+
+.card {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  padding: 1.5rem;
+  transition: transform 0.2s;
+}
+
+html.dark .card {
+  background: #1f2937; /* gray-800 */
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+}
+
+.card:hover {
+  transform: scale(1.01);
+}
+
+button {
+  color: white;
+  padding: 0.5rem 1rem;
+  visibility: visible;
+  border-radius: 0.75rem;
+  transition: background-color 0.2s;
+}
+
+button:hover {
+  background: var(--color-blue-700);
+}
+
