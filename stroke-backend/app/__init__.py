@@ -87,6 +87,7 @@ def create_app():
     from app.routes.appointments import appointments_bp
     from app.routes.admin import admin_bp
     from app.routes.analytics import analytics_bp
+    from app.routes.password_reset import password_reset_bp
     
     # Register each blueprint with /api/ prefix
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -95,6 +96,7 @@ def create_app():
     app.register_blueprint(appointments_bp, url_prefix='/api/appointments')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(analytics_bp, url_prefix='/api/analytics')
+    app.register_blueprint(password_reset_bp, url_prefix='/api')
     
     # ========== DATABASE INITIALIZATION ==========
     
