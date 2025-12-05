@@ -3,7 +3,7 @@
 // Provides overview of patients, doctors, appointments, and high-risk patients
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getSystemStats, getAllUsers, updateUser, createUser } from '../api';
+import { getSystemStats, getAllUsers, updateUser, createUser, getSecurityLogs } from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUsers, FaUserMd, FaChartBar, FaShieldAlt, FaExclamationTriangle, FaTimes, FaEdit, FaTrash, FaPlus, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +27,9 @@ export default function AdminDashboard() {
   
   // State to store recent user activity/events in the system
   const [recentActivity, setRecentActivity] = useState([]);
+  
+  // State to store security logs
+  const [securityLogs, setSecurityLogs] = useState([]);
   
   // State to track if data is currently being loaded from API
   const [loading, setLoading] = useState(true);
@@ -103,6 +106,9 @@ export default function AdminDashboard() {
           };
         });
         setRecentActivity(recent);
+        
+        // Fetch security logs
+        await loadSecurityLogs();
       } catch (err) {
         // Only update state if component is still mounted
         if (!isMounted) return;
@@ -124,6 +130,16 @@ export default function AdminDashboard() {
       isMounted = false;
     };
   }, [user]);
+
+  // Load security logs
+  const loadSecurityLogs = async () => {
+    try {
+      const response = await getSecurityLogs({ limit: 50, hours: 168 }); // Last 7 days
+      setSecurityLogs(response.logs || []);
+    } catch (err) {
+      console.error('Failed to load security logs:', err);
+    }
+  };
 
   // Load doctors when modal opens
   const loadDoctors = async () => {
@@ -159,6 +175,7 @@ export default function AdminDashboard() {
   // Handle opening security logs modal
   const handleSecurityLogs = () => {
     setShowSecurityModal(true);
+    loadSecurityLogs(); // Refresh logs when opening modal
   };
 
   // Handle adding new user (doctor)
@@ -490,59 +507,151 @@ export default function AdminDashboard() {
   };
 
   // Security Logs Modal
-  const SecurityLogsModal = ({ onClose }) => (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-hidden"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Modal Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Security Logs</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            >
-              <FaTimes className="text-gray-600 dark:text-gray-300" size={20} />
-            </button>
-          </div>
+  const SecurityLogsModal = ({ onClose }) => {
+    // Helper function to get color based on event type
+    const getEventColor = (eventType) => {
+      const colors = {
+        'login': 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900',
+        'logout': 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900',
+        'failed_login': 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900',
+        'user_created': 'text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900',
+        'user_updated': 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900',
+        'user_deleted': 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900',
+        'patient_accessed': 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900',
+        'patient_updated': 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900'
+      };
+      return colors[eventType] || 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900';
+    };
 
-          {/* Modal Body */}
-          <div className="p-6 overflow-y-auto max-h-[60vh]">
-            <div className="space-y-3">
-              {recentActivity.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700"
-                >
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800 dark:text-white">{activity.action}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      By {activity.user} &middot; {activity.time}
-                    </p>
-                  </div>
-                </div>
-              ))}
+    // Helper function to get severity indicator color
+    const getSeverityColor = (severity) => {
+      const colors = {
+        'info': 'bg-blue-500',
+        'warning': 'bg-yellow-500',
+        'error': 'bg-red-500',
+        'critical': 'bg-red-700'
+      };
+      return colors[severity] || 'bg-gray-500';
+    };
+
+    // Helper function to format event type for display
+    const formatEventType = (eventType) => {
+      return eventType
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    };
+
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-6xl w-full max-h-[85vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Security Logs</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  Last 7 days • {securityLogs.length} events
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <FaTimes className="text-gray-600 dark:text-gray-300" size={20} />
+              </button>
             </div>
-            {recentActivity.length === 0 && (
-              <p className="text-center text-gray-500 dark:text-gray-400 py-8">No security logs available</p>
-            )}
-          </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto max-h-[calc(85vh-120px)]">
+              {securityLogs.length === 0 ? (
+                <p className="text-center text-gray-500 dark:text-gray-400 py-8">No security logs available</p>
+              ) : (
+                <div className="space-y-2">
+                  {securityLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      {/* Severity indicator dot */}
+                      <div className={`w-2 h-2 ${getSeverityColor(log.severity)} rounded-full mt-2 flex-shrink-0`}></div>
+                      
+                      {/* Log content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            {/* Event type badge */}
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium ${getEventColor(log.event_type)} mb-2`}>
+                              {formatEventType(log.event_type)}
+                            </span>
+                            
+                            {/* Event description */}
+                            <p className="text-sm font-medium text-gray-800 dark:text-white">
+                              {log.event_description}
+                            </p>
+                            
+                            {/* Event metadata */}
+                            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
+                              {log.username && (
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium">User:</span> {log.username}
+                                  {log.user_role && <span className="text-blue-600 dark:text-blue-400">({log.user_role})</span>}
+                                </span>
+                              )}
+                              {log.ip_address && (
+                                <span className="flex items-center gap-1">
+                                  <span className="font-medium">IP:</span> {log.ip_address}
+                                </span>
+                              )}
+                              <span className="flex items-center gap-1">
+                                <span className="font-medium">Time:</span> {new Date(log.created_at).toLocaleString()}
+                              </span>
+                            </div>
+                            
+                            {/* Status indicator */}
+                            <div className="mt-2">
+                              <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                                log.status === 'success' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                log.status === 'failure' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                log.status === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                              }`}>
+                                {log.status.charAt(0).toUpperCase() + log.status.slice(1)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Target info (if applicable) */}
+                          {log.target_username && (
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">Target</p>
+                              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{log.target_username}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  );
+      </AnimatePresence>
+    );
+  };
 
   // Display loading spinner while fetching data from API
   // Display loading spinner while fetching data from API
