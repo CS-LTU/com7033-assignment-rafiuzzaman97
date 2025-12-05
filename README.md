@@ -376,12 +376,6 @@ This assignment used generative AI for:
 
 ---
 
-## 📄 License
-
-This project is developed for academic purposes as part of COM7033 coursework at Leeds Trinity University.
-
----
-
 ## 🙏 Acknowledgments
 
 - **Flask** team for excellent web framework
@@ -389,7 +383,6 @@ This project is developed for academic purposes as part of COM7033 coursework at
 - **Tailwind CSS** for utility-first styling approach
 - **MongoDB** for flexible NoSQL database
 - **PyMongo** and **SQLAlchemy** for database abstractions
-- **Leeds Trinity University** for project guidance
 
 ---
 
