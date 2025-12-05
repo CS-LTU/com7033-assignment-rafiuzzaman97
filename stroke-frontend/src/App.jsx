@@ -22,6 +22,8 @@ import React from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
 import Login from './pages/Login'
 import RegisterPatient from './pages/RegisterPatient'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import AdminDashboard from './pages/AdminDashboard'
 import DoctorDashboard from './pages/DoctorDashboard'
 import PatientDashboard from './pages/PatientDashboard'
@@ -118,6 +120,12 @@ export default function App() {
           
           {/* Patient Registration Page - Self-registration for new patients */}
           <Route path='/register' element={<RegisterPatient />} />
+          
+          {/* Forgot Password Page - Request password reset email */}
+          <Route path='/forgot-password' element={<ForgotPassword />} />
+          
+          {/* Reset Password Page - Set new password with token from email */}
+          <Route path='/reset-password' element={<ResetPassword />} />
 
           {/* 
             ===== PROTECTED ROUTES =====

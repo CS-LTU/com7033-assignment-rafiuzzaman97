@@ -131,9 +131,18 @@ export default function Login() {
         
         {/* Password input field */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            Password
-          </label>
+          <div className="flex justify-between items-center mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={() => nav('/forgot-password')}
+              className="text-xs text-blue-600 hover:underline font-medium"
+            >
+              Forgot Password?
+            </button>
+          </div>
           <input
             id="password"
             type="password"
