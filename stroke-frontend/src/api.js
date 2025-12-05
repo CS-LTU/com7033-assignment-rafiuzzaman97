@@ -929,6 +929,95 @@ export const apiUtils = {
   }
 };
 
+// ==================== SECURITY LOG API ====================
+
+/**
+ * Get Security Logs
+ * Retrieves security logs with optional filtering (admin only)
+ * 
+ * @param {Object} filters - Filter options
+ * @param {number} filters.limit - Maximum number of logs to return
+ * @param {string} filters.event_type - Filter by event type
+ * @param {number} filters.user_id - Filter by user ID
+ * @param {string} filters.severity - Filter by severity level
+ * @param {number} filters.hours - Time window in hours
+ * @param {string} filters.status - Filter by status
+ * @returns {Promise<Object>} Security logs and total count
+ */
+export async function getSecurityLogs(filters = {}) {
+  const params = new URLSearchParams();
+  
+  if (filters.limit) params.append('limit', filters.limit);
+  if (filters.event_type) params.append('event_type', filters.event_type);
+  if (filters.user_id) params.append('user_id', filters.user_id);
+  if (filters.severity) params.append('severity', filters.severity);
+  if (filters.hours) params.append('hours', filters.hours);
+  if (filters.status) params.append('status', filters.status);
+  
+  const queryString = params.toString();
+  const endpoint = `/security/logs${queryString ? `?${queryString}` : ''}`;
+  
+  return await secureFetch(endpoint);
+}
+
+/**
+ * Get Failed Login Attempts
+ * Retrieves failed login attempts for security monitoring (admin only)
+ * 
+ * @param {Object} filters - Filter options
+ * @param {string} filters.username - Filter by username
+ * @param {number} filters.hours - Time window in hours
+ * @param {number} filters.limit - Maximum number of logs
+ * @returns {Promise<Object>} Failed login attempts with IP analysis
+ */
+export async function getFailedLogins(filters = {}) {
+  const params = new URLSearchParams();
+  
+  if (filters.username) params.append('username', filters.username);
+  if (filters.hours) params.append('hours', filters.hours);
+  if (filters.limit) params.append('limit', filters.limit);
+  
+  const queryString = params.toString();
+  const endpoint = `/security/logs/failed-logins${queryString ? `?${queryString}` : ''}`;
+  
+  return await secureFetch(endpoint);
+}
+
+/**
+ * Get User Activity Logs
+ * Retrieves activity logs for a specific user
+ * 
+ * @param {number} userId - User ID to get activity for
+ * @param {number} limit - Maximum number of logs
+ * @returns {Promise<Object>} User activity logs
+ */
+export async function getUserActivity(userId, limit = 100) {
+  const params = new URLSearchParams();
+  if (limit) params.append('limit', limit);
+  
+  const queryString = params.toString();
+  const endpoint = `/security/logs/user-activity/${userId}${queryString ? `?${queryString}` : ''}`;
+  
+  return await secureFetch(endpoint);
+}
+
+/**
+ * Get Security Statistics
+ * Provides overview of security events for dashboard (admin only)
+ * 
+ * @param {number} hours - Time window in hours
+ * @returns {Promise<Object>} Security statistics
+ */
+export async function getSecurityStats(hours = 24) {
+  const params = new URLSearchParams();
+  if (hours) params.append('hours', hours);
+  
+  const queryString = params.toString();
+  const endpoint = `/security/logs/stats${queryString ? `?${queryString}` : ''}`;
+  
+  return await secureFetch(endpoint);
+}
+
 /**
  * Default Export - Convenience Export
  * Allows importing main functions directly: import api from './api'
