@@ -102,6 +102,7 @@ export default function Login() {
       <h1 className="text-center text-xl font-semibold text-gray-800 mb-2">Welcome Back</h1>
       <p className="text-center text-gray-600 mb-6">Sign in to your account</p>
 
+
       {/* Display error messages if login fails */}
       {msg && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm">
@@ -131,9 +132,18 @@ export default function Login() {
         
         {/* Password input field */}
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            Password
-          </label>
+          <div className="flex justify-between items-center mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <button
+              type="button"
+              onClick={() => nav('/forgot-password')}
+              className="text-xs text-blue-600 hover:underline font-medium"
+            >
+              Forgot Password?
+            </button>
+          </div>
           <input
             id="password"
             type="password"
@@ -164,7 +174,7 @@ export default function Login() {
         </button>
       </form>
 
-      {/* Demo credentials section for testing */}
+      {/* Demo credentials section for testing
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <h3 className="text-sm font-medium text-gray-700 mb-2">Demo Credentials:</h3>
         <div className="text-xs text-gray-600 space-y-1">
@@ -172,7 +182,7 @@ export default function Login() {
           <p>Doctor: doctor / doctor123</p>
           <p>Patient: patient / patient123</p>
         </div>
-      </div>
+      </div> */}
 
       {/* Link to registration page for new patients */}
       <p className="mt-6 text-center text-sm text-gray-600">
